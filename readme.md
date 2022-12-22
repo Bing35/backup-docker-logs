@@ -8,3 +8,6 @@ For linux: `tar gzip gpg docker aws-cli`
 For python: look at ./requirements.txt
 
 The scripts uses a `.env` file that contains the password to encrypt the backups with. The content looks like `ENCRYPT_PASSWORD="your password"`.
+
+## How to run
+`python3 backupLogs.py`
