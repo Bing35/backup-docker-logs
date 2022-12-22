@@ -38,18 +38,16 @@ def main():
             backupTime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             backupFilePath = f'\"{containerObject["dirPath"]}/{backupTime}\"'
             #write logs to file
-            #print('docker logs:\n', f'docker logs {containerObject["id"]} > {backupFilePath}')
             print(runShell(f'docker logs {containerObject["id"]} > {backupFilePath}').stderr)
 
             #clear docker logs
             print(runShell(f'echo > $(docker inspect --format="{{{{.LogPath}}}}" {containerObject["id"]})').stderr)
 
             #tar and compress logs
-            #print('tar: ', f'tar -ca -C {containerObject["dirPath"]} -f {backupTime}.tar.gz {backupTime}')
             print(runShell(f'tar -caf {backupFilePath}.tar.gz -C {containerObject["dirPath"]} {backupTime}').stderr)
 
             #encrypt file
-            runShell(f'gpg --passphrase {os.getenv("ENCRYPT_PASSWORD")} --batch --cipher-algo AES256 --symmetric {backupFilePath}.tar.gz')
+            print(runShell(f'gpg --passphrase {os.getenv("ENCRYPT_PASSWORD")} --batch --cipher-algo AES256 --symmetric {backupFilePath}.tar.gz').stderr)
             
             #upload to the cloud
             localIpAddress = runShell(f"ip addr | grep -E 'inet .*global dynamic' | head -1 | sed -E 's/ +/ /g' | cut -d' ' -f 3 | cut -d'/' -f 1").stdout[:-1]
