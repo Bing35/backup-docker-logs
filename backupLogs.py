@@ -28,14 +28,14 @@ def main():
 
     #create backup folders  
     for containerObject in containerArray:
-        containerObject['dirPath'] = os.path.abspath(f'{DIR_PATH}/../backups/{containerObject["name"]}')
+        containerObject['dirPath'] = os.path.abspath(f'/var/backupScripts/{containerObject["name"]}')
         runShell(f'mkdir -p {containerObject["dirPath"]}')
         print(f'{containerObject["id"]}')
 
     # create backups periodically
     while True:
         for containerObject in containerArray:
-            backupTime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            backupTime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
             backupFilePath = f'\"{containerObject["dirPath"]}/{backupTime}\"'
             #write logs to file
             #print('docker logs:\n', f'docker logs {containerObject["id"]} > {backupFilePath}')
@@ -52,9 +52,15 @@ def main():
             runShell(f'gpg --passphrase {os.getenv("ENCRYPT_PASSWORD")} --batch --cipher-algo AES256 --symmetric {backupFilePath}.tar.gz')
             
             #upload to the cloud
+            localIpAddress = runShell(f"ip addr | grep -E 'inet .*global dynamic' | head -1 | sed -E 's/ +/ /g' | cut -d' ' -f 3 | cut -d'/' -f 1").stdout[:-1]
+            # You can change this command if you use another cloud provider.
+            print(runShell(f'aws s3 cp {backupFilePath}.tar.gz.gpg s3://yourS3Bucket/{localIpAddress}/{containerObject["name"]}/').stderr)
+
+            #delete local backups
+            runShell(f'rm {containerObject["dirPath"]}/*')
         
         #sleep before next backup
-        time.sleep(60)
+        time.sleep(60*60*24)
 
             
 if __name__ == '__main__':
